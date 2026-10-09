@@ -1,0 +1,7 @@
+parth-terraform_accessKeys.csv
+dummy-cognito-user-for-test-cred
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfplan
+infra/terraform/terraform.tfvars
