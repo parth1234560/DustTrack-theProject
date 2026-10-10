@@ -102,3 +102,19 @@ def test_split_short_line_returned_whole():
 def test_split_bad_target():
     with pytest.raises(ValueError):
         geo.split_linestring([[0.0, 0.0], [1.0, 1.0]], 0.0)
+
+
+def test_decimal_coords_from_dynamodb():
+    # DynamoDB returns Decimals; geo must coerce them to float.
+    from decimal import Decimal
+
+    coords = [
+        [Decimal("77.20"), Decimal("28.61")],
+        [Decimal("77.21"), Decimal("28.62")],
+    ]
+    assert geo.linestring_length_m(coords) == pytest.approx(
+        geo.linestring_length_m([[77.20, 28.61], [77.21, 28.62]])
+    )
+    assert geo.distance_to_linestring_m(28.615, 77.205, coords) >= 0.0
+    lat, lon = geo.linestring_midpoint(coords)
+    assert isinstance(lat, float) and isinstance(lon, float)

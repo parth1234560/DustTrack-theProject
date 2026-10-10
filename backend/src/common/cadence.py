@@ -39,6 +39,7 @@ def update_cadence(
     "no_previous_cleaning", "cleaning_not_before_inspection",
     "already_observed".
     """
+    current = float(current)
     if inspector_rating < config.CADENCE_MIN_RATING:
         return CadenceResult(current, current, False, None, "rating_below_threshold")
     if not last_cleaned_at:

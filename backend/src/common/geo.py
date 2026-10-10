@@ -17,6 +17,7 @@ _METERS_PER_DEG_LAT: float = radians(1.0) * EARTH_RADIUS_M
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Great-circle distance between two points, in metres."""
+    lat1, lon1, lat2, lon2 = float(lat1), float(lon1), float(lat2), float(lon2)
     phi1 = radians(lat1)
     phi2 = radians(lat2)
     dphi = radians(lat2 - lat1)
@@ -60,6 +61,7 @@ def distance_to_linestring_m(
         raise ValueError("coords must contain at least one point")
     if len(coords) == 1:
         return haversine_m(lat, lon, coords[0][1], coords[0][0])
+    coords = [[float(c[0]), float(c[1])] for c in coords]
     lat0 = sum(c[1] for c in coords) / len(coords)
     points, kx, ky = _to_local([list(c) for c in coords], lat0)
     px, py = lon * kx, lat * ky
@@ -73,6 +75,7 @@ def linestring_length_m(coords: list[list[float]]) -> float:
     """Total length of a polyline in metres (0 for < 2 points)."""
     if len(coords) < 2:
         return 0.0
+    coords = [[float(c[0]), float(c[1])] for c in coords]
     return sum(
         haversine_m(a[1], a[0], b[1], b[0]) for a, b in itertools.pairwise(coords)
     )
@@ -83,7 +86,8 @@ def linestring_midpoint(coords: list[list[float]]) -> tuple[float, float]:
     if not coords:
         raise ValueError("coords must contain at least one point")
     if len(coords) < 2:
-        return (coords[0][1], coords[0][0])
+        return (float(coords[0][1]), float(coords[0][0]))
+    coords = [[float(c[0]), float(c[1])] for c in coords]
     legs = [haversine_m(a[1], a[0], b[1], b[0]) for a, b in itertools.pairwise(coords)]
     total = sum(legs)
     if total == 0.0:

@@ -15,9 +15,10 @@ OnlyStatus = str | tuple[str, ...] | None
 
 
 def to_dynamo(value: Any) -> Any:
-    """Recursively convert floats to Decimal; reject NaN/inf and booleans."""
-    if isinstance(value, bool):
-        raise TypeError("booleans are not allowed where numbers are required")
+    """Recursively convert floats to Decimal; reject NaN/inf.
+
+    Booleans pass through as DynamoDB BOOL (callers validate numerics).
+    """
     if isinstance(value, float):
         if math.isnan(value) or math.isinf(value):
             raise ValueError("NaN/inf are not allowed in DynamoDB items")
@@ -86,7 +87,9 @@ def update_segment(s: str, f: dict[str, Any]) -> bool:
     return _update(config.SEGMENTS_TABLE, {"segmentId": s}, f)
 
 
-def _update(t: str, key: dict[str, str], f: dict[str, Any], only: OnlyStatus) -> bool:
+def _update(
+    t: str, key: dict[str, str], f: dict[str, Any], only: OnlyStatus = None
+) -> bool:
     names = {f"#f{i}": k for i, k in enumerate(f)}
     values = {f":f{i}": to_dynamo(v) for i, v in enumerate(f.values())}
     expr = "SET " + ", ".join(f"#f{i} = :f{i}" for i in range(len(f)))

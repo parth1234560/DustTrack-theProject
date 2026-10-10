@@ -77,8 +77,8 @@ def _weather_component(
         return 0.0
     if consecutive_dry_days is None or forecast_wind_kmh is None:
         return config.FALLBACK_WEATHER_COMPONENT
-    dry = _clamp01(consecutive_dry_days / config.DRY_DAY_NORMALIZER)
-    wind = _clamp01(forecast_wind_kmh / config.WIND_NORMALIZER_KMH)
+    dry = _clamp01(float(consecutive_dry_days) / config.DRY_DAY_NORMALIZER)
+    wind = _clamp01(float(forecast_wind_kmh) / config.WIND_NORMALIZER_KMH)
     return _clamp01(0.6 * dry + 0.4 * wind)
 
 
