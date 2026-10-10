@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Build the single Lambda zip (root = src/ contents) and sanity-check it.
+# Uses PYTHON (default "python"); see scripts/check.sh header.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+PY="${PYTHON:-python}"
 rm -rf build && mkdir -p build
-.venv/bin/python - <<'EOF'
+"$PY" - <<'EOF'
 import os
 import zipfile
 
@@ -18,10 +20,10 @@ with zipfile.ZipFile("build/dusttrack-backend.zip", "w", zipfile.ZIP_DEFLATED) a
 EOF
 echo "zip: $(du -h build/dusttrack-backend.zip | cut -f1) build/dusttrack-backend.zip"
 echo "top-level entries:"
-.venv/bin/python -c "import zipfile; print('\n'.join(sorted({n.split('/')[0] for n in zipfile.ZipFile('build/dusttrack-backend.zip').namelist() if n.strip('/')})))"
+"$PY" -c "import zipfile; print('\n'.join(sorted({n.split('/')[0] for n in zipfile.ZipFile('build/dusttrack-backend.zip').namelist() if n.strip('/')})))"
 TMPDIR_CHECK=$(mktemp -d)
-.venv/bin/python -c "import zipfile; zipfile.ZipFile('build/dusttrack-backend.zip').extractall('$TMPDIR_CHECK')"
-PYTHONPATH="$TMPDIR_CHECK" .venv/bin/python -c "
+"$PY" -c "import zipfile; zipfile.ZipFile('build/dusttrack-backend.zip').extractall('$TMPDIR_CHECK')"
+PYTHONPATH="$TMPDIR_CHECK" "$PY" -c "
 import api.handler
 import workflow.validate_input, workflow.analyse_image, workflow.fetch_weather
 import workflow.update_cadence, workflow.score_segment, workflow.publish_work_list

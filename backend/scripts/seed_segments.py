@@ -106,6 +106,8 @@ def main() -> None:
         f"segments: {len(made)} skipped={skipped} levels={levels} "
         f"dry_run={args.dry_run}"
     )
+    if skipped > 0:
+        print("WARNING: skipped existing items (may lack fields); use --overwrite.")
     top = sorted(made, key=lambda s: s["priorityScore"], reverse=True)[:5]
     for item in top:
         print(

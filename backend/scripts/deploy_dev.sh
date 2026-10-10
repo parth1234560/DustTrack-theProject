@@ -1,16 +1,28 @@
 #!/usr/bin/env bash
 # Deploy the backend zip to the 7 dev Lambdas. See backend/README.md.
+# Uses PYTHON (default "python"); see scripts/check.sh header.
 # --configure also sets handlers/timeout/memory and merges table env vars.
 # WARNING: --configure drifts from Terraform; the owner must apply the same
 # settings in infra/terraform or the next apply reverts them.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+PY="${PYTHON:-python}"
 REGION="ap-south-1"
 PREFIX="dusttrack-dev"
 API_FN="${API_FN:-}"
 STEPS="validate_input analyse_image fetch_weather update_cadence score_segment publish_work_list"
 CONFIGURE=0
 [ "${1:-}" = "--configure" ] && CONFIGURE=1
+configure_fn() {
+  fn="$1"
+  handler="$2"
+  current=$(aws lambda get-function-configuration --function-name "$fn" --region "$REGION" --query 'Environment.Variables || `{}`')
+  merged=$(TABLES_JSON="$current" PREFIX="$PREFIX" "$PY" -c "import json,os; e=json.loads(os.environ['TABLES_JSON']); e.setdefault('INSPECTIONS_TABLE', f\"{os.environ['PREFIX']}-inspections\"); e.setdefault('SEGMENTS_TABLE', f\"{os.environ['PREFIX']}-segments\"); e.setdefault('CLEANING_EVENTS_TABLE', f\"{os.environ['PREFIX']}-cleaning-events\"); print(json.dumps(e))")
+  aws lambda update-function-configuration --function-name "$fn" --handler "$handler" --timeout 15 --memory-size 256 --environment "{\"Variables\":$merged}" --region "$REGION" >/dev/null
+  aws lambda wait function-updated --function-name "$fn" --region "$REGION"
+  echo "configured: $fn"
+  aws lambda get-function-configuration --function-name "$fn" --region "$REGION" --query '{handler: Handler, timeout: Timeout, memory: MemorySize, envKeys: keys(Environment.Variables || `{}`)}'
+}
 if [ -z "$API_FN" ] || ! aws lambda get-function --function-name "$API_FN" --region "$REGION" >/dev/null 2>&1; then
   echo "API function not found (API_FN='${API_FN:-unset}'). Candidates:"
   aws lambda list-functions --region "$REGION" --query 'Functions[?contains(FunctionName, `dusttrack`) || contains(FunctionName, `api`)].FunctionName' --output text
@@ -24,18 +36,13 @@ for step in $STEPS; do
   aws lambda wait function-updated --function-name "$fn" --region "$REGION"
   echo "code updated: $fn"
   if [ "$CONFIGURE" = "1" ]; then
-    aws lambda update-function-configuration --function-name "$fn" --handler "workflow.$step.handler" --timeout 15 --memory-size 256 --region "$REGION" >/dev/null
-    ENV_JSON=$(aws lambda get-function-configuration --function-name "$fn" --region "$REGION" --query 'Environment.Variables // `{}`')
-    MERGED=$(TABLES_JSON="$ENV_JSON" PREFIX="$PREFIX" python3 -c "import json,os; e=json.loads(os.environ['TABLES_JSON']); e.setdefault('INSPECTIONS_TABLE', f\"{os.environ['PREFIX']}-inspections\"); e.setdefault('SEGMENTS_TABLE', f\"{os.environ['PREFIX']}-segments\"); e.setdefault('CLEANING_EVENTS_TABLE', f\"{os.environ['PREFIX']}-cleaning-events\"); print(json.dumps(e))")
-    aws lambda update-function-configuration --function-name "$fn" --environment "Variables=$MERGED" --region "$REGION" >/dev/null
-    echo "configured: $fn (handler/timeout/memory/env merged)"
+    configure_fn "$fn" "workflow.$step.handler"
   fi
 done
 aws lambda update-function-code --function-name "$API_FN" --zip-file fileb://build/dusttrack-backend.zip --region "$REGION" >/dev/null
 aws lambda wait function-updated --function-name "$API_FN" --region "$REGION"
 echo "code updated: $API_FN"
 if [ "$CONFIGURE" = "1" ]; then
-  aws lambda update-function-configuration --function-name "$API_FN" --handler "api.handler.lambda_handler" --timeout 15 --memory-size 256 --region "$REGION" >/dev/null
-  echo "configured: $API_FN (handler/timeout/memory)"
+  configure_fn "$API_FN" "api.handler.lambda_handler"
   echo "WARNING: --configure drifts from Terraform (see header)."
 fi
