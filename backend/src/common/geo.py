@@ -104,10 +104,11 @@ def linestring_midpoint(coords: list[list[float]]) -> tuple[float, float]:
 def split_linestring(
     coords: list[list[float]], target_m: float
 ) -> list[list[list[float]]]:
-    """Split a polyline into stretches of ~target_m (last one may be shorter).
+    """Split a polyline into n equal-length pieces sharing endpoints.
 
-    Cut points are shared between consecutive pieces. Returns at least one
-    piece; a line shorter than target_m is returned whole.
+    n = max(1, round(total / target_m)), so no tiny remainder stretch ever
+    appears (1012 m at 250 m -> 4 pieces of ~253 m). A line shorter than
+    half of target_m stays whole.
     """
     if target_m <= 0:
         raise ValueError("target_m must be positive")
@@ -130,14 +131,8 @@ def split_linestring(
             acc += leg
         return list(pts[-1])
 
-    cuts: list[float] = []
-    dist = target_m
-    # Epsilon avoids a hairline sliver piece when total is a floating-point
-    # hair above an exact multiple of target_m.
-    while dist < total - 1e-6:
-        cuts.append(dist)
-        dist += target_m
-    boundaries = [0.0] + cuts + [total]
+    n = max(1, round(total / target_m))
+    boundaries = [(total * k) / n for k in range(n + 1)]
 
     # Cumulative distance of each interior vertex, for inclusion in pieces.
     vertex_at: list[float] = []

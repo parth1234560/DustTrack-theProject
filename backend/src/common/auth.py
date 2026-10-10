@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from common import config
 from common.errors import ApiError
 
 UNKNOWN_USER: str = "unknown"
@@ -63,14 +62,10 @@ def get_groups(event: dict[str, Any]) -> list[str]:
 def require_role(event: dict[str, Any], *allowed: str) -> dict[str, Any]:
     """Require the caller to hold one of the allowed groups.
 
-    Returns the claims on success. When ENFORCE_ROLES is "false" the group
-    check is skipped (identity is still read from the JWT).
-    Raises ApiError(UNAUTHORIZED) without a subject, ApiError(FORBIDDEN)
-    without a matching group.
+    Returns the claims on success. Raises ApiError(UNAUTHORIZED) without a
+    subject, ApiError(FORBIDDEN) without a matching group.
     """
     claims = get_claims(event)
-    if not config.is_enforce_roles():
-        return claims
     if not claims.get("sub"):
         raise ApiError("UNAUTHORIZED", "Missing or invalid authentication", 401)
     groups = get_groups(event)

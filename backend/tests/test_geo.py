@@ -69,6 +69,28 @@ def test_split_even():
         assert first[-1] == pytest.approx(second[0])
 
 
+def test_split_no_remainder_sliver():
+    # 1012 m at 250 m -> 4 equal pieces of ~253 m, never 4x250 + 12 m.
+    span = 1012.0 / DEG_LAT_M
+    coords = [[77.20, 28.60], [77.20, 28.60 + span]]
+    pieces = geo.split_linestring(coords, 250.0)
+    assert len(pieces) == 4
+    for piece in pieces:
+        assert geo.linestring_length_m(piece) == pytest.approx(253.0, abs=1.0)
+
+
+def test_split_rounds_to_nearest_count():
+    span = 260.0 / DEG_LAT_M
+    coords = [[77.20, 28.60], [77.20, 28.60 + span]]
+    assert len(geo.split_linestring(coords, 250.0)) == 1
+    span = 380.0 / DEG_LAT_M
+    coords = [[77.20, 28.60], [77.20, 28.60 + span]]
+    pieces = geo.split_linestring(coords, 250.0)
+    assert len(pieces) == 2
+    for piece in pieces:
+        assert geo.linestring_length_m(piece) == pytest.approx(190.0, abs=1.0)
+
+
 def test_split_short_line_returned_whole():
     coords = [[77.20, 28.60], [77.20, 28.601]]
     pieces = geo.split_linestring(coords, 250.0)

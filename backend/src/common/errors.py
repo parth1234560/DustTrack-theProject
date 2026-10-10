@@ -4,19 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
-# API error code -> HTTP status. Codes are final; UNAUTHORIZED and CONFLICT
-# are additive (the contract requires 401 semantics and 409 exists in its
-# status table, but neither code was named in the brief).
+# API error code -> HTTP status. UNAUTHORIZED is additive: the contract's
+# status table needs 401 but the brief's code list omits it.
 API_STATUS: dict[str, int] = {
     "INVALID_JSON": 400,
     "VALIDATION_ERROR": 400,
-    "INVALID_CURSOR": 400,
     "UNAUTHORIZED": 401,
     "FORBIDDEN": 403,
     "SEGMENT_NOT_FOUND": 404,
     "INSPECTION_NOT_FOUND": 404,
     "ROUTE_NOT_FOUND": 404,
-    "CONFLICT": 409,
     "INTERNAL_ERROR": 500,
 }
 

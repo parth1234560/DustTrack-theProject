@@ -70,27 +70,3 @@ def parse_json_body(event: dict[str, Any]) -> dict[str, Any]:
             raise ApiError("INVALID_JSON", "Request body must be a JSON object")
         return parsed
     raise ApiError("INVALID_JSON", "Request body must be a JSON object")
-
-
-def encode_cursor(offset: int) -> str:
-    """Encode an integer offset as an opaque base64url cursor."""
-    raw = json.dumps({"o": offset}).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
-
-
-def decode_cursor(cursor: str | None) -> int:
-    """Decode a cursor back to an offset; None means the first page.
-
-    Raises ApiError(INVALID_CURSOR) for any malformed cursor.
-    """
-    if cursor is None or cursor == "":
-        return 0
-    try:
-        padded = cursor + "=" * (-len(cursor) % 4)
-        parsed = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
-        offset = parsed["o"] if isinstance(parsed, dict) else None
-    except (ValueError, KeyError, UnicodeDecodeError):
-        raise ApiError("INVALID_CURSOR", "Cursor is invalid") from None
-    if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
-        raise ApiError("INVALID_CURSOR", "Cursor is invalid")
-    return offset

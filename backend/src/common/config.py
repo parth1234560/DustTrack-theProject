@@ -2,11 +2,6 @@
 
 Contract: every tunable lives here and nowhere else. Later parts must
 import from here instead of introducing competing constants.
-
-Environment variable *names* are final. Values are read at import time
-into module constants. :func:`is_enforce_roles` re-reads the environment
-on every call so tests can toggle ``ENFORCE_ROLES`` with ``monkeypatch``
-without reloading this module.
 """
 
 from __future__ import annotations
@@ -39,23 +34,13 @@ CLEANING_EVENTS_TABLE: str = _str(
     "CLEANING_EVENTS_TABLE", "dusttrack-dev-cleaning-events"
 )
 PHOTO_BUCKET: str = _str("PHOTO_BUCKET", "")
-AWS_REGION: str = _str("AWS_REGION", "ap-south-1")
 
 UPLOAD_URL_EXPIRES: int = _int("UPLOAD_URL_EXPIRES", 900)
 DOWNLOAD_URL_EXPIRES: int = _int("DOWNLOAD_URL_EXPIRES", 300)
 MAX_IMAGE_BYTES: int = _int("MAX_IMAGE_BYTES", 10 * 1024 * 1024)
 GPS_MAX_DISTANCE_M: float = _float("GPS_MAX_DISTANCE_M", 150.0)
 
-VISION_PROVIDER: str = _str("VISION_PROVIDER", "none")
-WEATHER_PROVIDER: str = _str("WEATHER_PROVIDER", "none")
-BEDROCK_MODEL_ID: str = _str("BEDROCK_MODEL_ID", "")
-ENFORCE_ROLES: str = _str("ENFORCE_ROLES", "true")
 LOG_LEVEL: str = _str("LOG_LEVEL", "INFO")
-
-
-def is_enforce_roles() -> bool:
-    """Return True unless ENFORCE_ROLES is explicitly "false" (live read)."""
-    return os.environ.get("ENFORCE_ROLES", ENFORCE_ROLES).strip().lower() != "false"
 
 
 # --- Scoring -------------------------------------------------------------
@@ -111,7 +96,6 @@ REJECTION_CODES: tuple[str, ...] = (
     "INVALID_IMAGE",
     "IMAGE_TOO_LARGE",
     "INVALID_GPS",
-    "DUPLICATE_IMAGE",
     "OBJECT_MISSING",
     "SEGMENT_NOT_FOUND",
 )
@@ -125,15 +109,6 @@ EXTENSION_FOR_MIME: dict[str, str] = {
 }
 MIME_FOR_EXTENSION: dict[str, str] = {v: k for k, v in EXTENSION_FOR_MIME.items()}
 PHOTO_KEY_PREFIX: str = "inspections"
-
-VISION_FLAGS: tuple[str, ...] = (
-    "debris_pile",
-    "kerb_silt",
-    "unpaved_shoulder",
-    "construction_material",
-)
-# Flags that count as debris for the debris component.
-DEBRIS_FLAGS: frozenset[str] = frozenset({"debris_pile", "construction_material"})
 
 # --- API -----------------------------------------------------------------
 LIMIT_DEFAULT: int = 50
