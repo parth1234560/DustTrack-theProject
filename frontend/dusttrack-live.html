@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DustTrack</title>
+<style>
+:root{--bg:#F3F1EC;--fg:#101820;--acc:#FF3B1F;--mut:color-mix(in srgb,var(--fg) 62%,var(--bg));--rule:var(--fg);
+--l0:var(--fg);--l1:var(--fg);--l2:var(--fg);--l3:var(--acc);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101820;--fg:#F3F1EC;--acc:#FF5A3C}}
+:root[data-theme="dark"]{--bg:#101820;--fg:#F3F1EC;--acc:#FF5A3C}
+*{box-sizing:border-box;border-radius:0}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.4 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;align-items:baseline;gap:16px;padding:14px 24px;background:var(--bg);border-bottom:4px solid var(--rule);flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;margin:0;flex:1;letter-spacing:-.03em}
+.btn{background:transparent;border:2px solid var(--fg);padding:11px 20px;font-weight:700;cursor:pointer;min-height:44px;transition:background .12s,color .12s,border-color .12s}
+.btn:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.p{background:var(--fg);color:var(--bg)}
+.btn.p:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,svg.map path:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+main{max-width:1080px;margin:auto;padding:32px 24px 80px}
+h2{font-size:clamp(34px,7vw,72px);font-weight:700;letter-spacing:-.045em;line-height:.98;margin:0 0 24px}
+h3{font-weight:700;letter-spacing:-.02em;margin:24px 0 8px}
+.card{background:transparent;border-top:2px solid var(--rule);padding:20px 0;margin-bottom:12px}
+label{display:block;font-weight:700;font-size:14px;margin:24px 0 6px}
+input,select,textarea{width:100%;padding:10px 0;border:0;border-bottom:2px solid var(--fg);background:transparent;outline-offset:0}
+select[size]{border:2px solid var(--fg);padding:4px}
+.badge{display:inline-block;padding:1px 8px;font-weight:700;font-size:13px;border:2px solid var(--fg);color:var(--fg)}
+.L0{border-style:dashed}
+.L2{background:var(--fg);color:var(--bg)}
+.L3{background:var(--acc);border-color:var(--acc);color:#fff}
+.rate{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--fg)}
+@media(min-width:600px){.rate{grid-template-columns:repeat(4,1fr)}}
+.rate button{min-height:80px;font-size:17px;font-weight:700;text-align:left;padding:12px;background:transparent;border:0;border-right:2px solid var(--fg);border-bottom:2px solid var(--fg);margin:0 -2px -2px 0;cursor:pointer}
+.rate button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.steps{display:flex;gap:0;margin:12px 0;border:2px solid var(--fg);width:fit-content;max-width:100%;flex-wrap:wrap}
+.steps span{padding:6px 16px;font-weight:700;font-size:14px;color:var(--mut)}
+.steps span+span{border-left:2px solid var(--fg)}
+.steps span.on{background:var(--fg);color:var(--bg)}
+.msg{border-left:4px solid var(--fg);padding:6px 14px;margin:14px 0;font-size:15px}
+.msg.err{border-left-color:var(--acc)}
+.tabs{display:flex;gap:28px;margin-bottom:28px}
+.tabs button{padding:6px 0;font-weight:700;font-size:17px;background:none;border:0;border-bottom:4px solid transparent;cursor:pointer;color:var(--mut)}
+.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--acc)}
+.row{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;cursor:pointer}
+.row:hover h3{color:var(--acc)}
+.row h3{margin:0 0 4px;font-size:22px;letter-spacing:-.03em}.mut{color:var(--mut);font-size:14px}
+.row b{display:block;font-size:44px;line-height:1;letter-spacing:-.05em;margin-top:8px}
+.split{display:grid;gap:32px;grid-template-columns:1fr}
+@media(min-width:860px){.split{grid-template-columns:7fr 5fr}.split>div+div{position:sticky;top:80px;align-self:start}}
+svg.map{width:100%;height:auto;background:transparent;border:2px solid var(--fg);display:block}
+svg.map path{fill:none;stroke:var(--fg);stroke-width:7;stroke-linecap:butt;cursor:pointer}
+svg.map path[data-lv=L0]{stroke-width:3;stroke-dasharray:6 8}
+svg.map path[data-lv=L1]{stroke-width:3}
+svg.map path[data-lv=L2]{stroke-width:8}
+svg.map path[data-lv=L3]{stroke:var(--acc);stroke-width:8}
+svg.map path.sel{stroke-width:14}
+dialog{max-width:560px;width:calc(100% - 24px);border:4px solid var(--fg);background:var(--bg);color:var(--fg);padding:28px}
+dialog::backdrop{background:rgba(16,24,32,.7)}
+.bar{height:10px;background:var(--fg);margin:4px 0 12px}
+.hide{display:none!important}
+.demo{color:var(--acc);font-weight:700;font-size:13px}
+.hero{padding:40px 0 8px}
+.hero h2{font-size:clamp(48px,12vw,128px);line-height:.92;letter-spacing:-.055em;margin:0 0 24px}
+.hero p{font-size:clamp(19px,3vw,26px);color:var(--mut);margin:0 0 40px;max-width:26ch;line-height:1.2}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.btn.p:hover,.btn:hover{transform:translate(-3px,-3px);box-shadow:4px 4px 0 var(--fg)}
+.btn:active{transform:none;box-shadow:none}
+.rate .g{display:block;font-size:32px;line-height:1;margin-bottom:8px}
+.rate button{transition:transform .12s}.rate button:hover{transform:translateY(-3px)}.rate button[aria-pressed=true] .g{transform:scale(1.25);transform-origin:left}
+.hero{position:relative}
+.sticker{position:absolute;right:0;top:24px;width:clamp(90px,18vw,170px);background:var(--acc);color:#fff;border-radius:50%}
+.sticker .spin{transform-origin:60px 60px;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tick{overflow:hidden;border-top:2px solid var(--fg);border-bottom:2px solid var(--fg);margin:8px 0 28px;white-space:nowrap}
+.tick div{display:inline-block;padding:8px 0;font-weight:700;animation:tick 28s linear infinite}
+@keyframes tick{to{transform:translateX(-50%)}}
+svg.map path[data-lv=L3]{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.wipe{position:fixed;inset:0;z-index:99;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(64px,18vw,200px);font-weight:700;letter-spacing:-.05em;animation:wipe 1.3s cubic-bezier(.7,0,.2,1) forwards;pointer-events:none}
+@keyframes wipe{0%{clip-path:inset(0 100% 0 0)}35%,65%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}
+@media(prefers-reduced-motion:reduce){.sticker .spin,.tick div,svg.map path[data-lv=L3]{animation:none}.wipe{animation-duration:.01s}}
+.prog{display:flex;gap:6px}.prog i{flex:1;height:8px;background:color-mix(in srgb,var(--fg) 18%,var(--bg))}.prog i.on{background:var(--acc)}
+.pick{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-top:2px solid var(--fg);padding:16px 0;cursor:pointer;font-size:16px}
+.pick b{display:block;font-size:22px;letter-spacing:-.03em}.pick:hover b{color:var(--acc)}.pick.sel{box-shadow:inset 6px 0 0 var(--acc);padding-left:18px}
+.cam{display:flex;flex-direction:column;gap:6px;align-items:flex-start;justify-content:center;min-height:300px;border:2px dashed var(--fg);padding:24px;cursor:pointer;position:relative}
+.cam .g{font-size:72px;line-height:1;color:var(--acc)}.cam b{font-size:28px;letter-spacing:-.04em}
+.cam:focus-within,label.btn:focus-within{outline:3px solid var(--acc);outline-offset:2px}
+.vh{position:absolute;opacity:0;width:1px;height:1px}
+.shot img{width:100%;max-height:50vh;object-fit:cover;display:block;border:2px solid var(--fg)}
+.fix{display:flex;gap:16px;align-items:center;border:2px solid var(--fg);padding:16px;margin-bottom:16px}.fix .g{font-size:44px;color:var(--acc);line-height:1}
+.lead{font-size:20px;line-height:1.25;max-width:30ch;margin:0 0 20px}
+.rlist{border:2px solid var(--fg)}
+.rb{display:flex;gap:16px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:2px solid var(--fg);padding:16px;cursor:pointer;font-size:16px;min-height:84px;transition:none}
+.rb:last-child{border-bottom:0}.rb .g{font-size:40px;line-height:1;width:44px}.rb b{display:block;font-size:22px;letter-spacing:-.03em}
+.rb.sel{background:var(--fg);color:var(--bg)}.rb.sel .mut{color:var(--bg);opacity:.75}.rb.sel .g{color:var(--acc)}
+.rv{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-top:2px solid var(--fg)}.rv img{width:72px;height:72px;object-fit:cover;display:block}
+.lnk{background:none;border:0;border-bottom:2px solid var(--acc);padding:0;font-weight:700;cursor:pointer;color:var(--fg)}
+.bar2{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:4px solid var(--fg);z-index:9;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar2 .in{max-width:1080px;margin:auto;padding:12px 24px;display:flex;gap:12px;align-items:center}.bar2 .hint{flex:1;font-size:14px;color:var(--mut);text-align:right}.bar2 .btn{min-width:130px}
+.btn.p.go{background:var(--acc);border-color:var(--acc);color:#fff}
+.step-in{animation:slide .3s cubic-bezier(.2,.8,.2,1)}@keyframes slide{from{opacity:0;transform:translateX(24px)}}
+.big{font-size:clamp(96px,28vw,220px);font-weight:700;letter-spacing:-.06em;line-height:.85;margin:8px 0 16px}
+@media(prefers-reduced-motion:reduce){.step-in{animation:none}}
+</style>
+</head>
+<body>
+<header><h1>DustTrack</h1><span class="demo hide" id="demo">Demo data</span><span id="who" class="mut"></span><button class="btn hide" id="out">Sign out</button></header>
+<main id="app"></main>
+<dialog id="dlg"></dialog>
+<script>
+// ---- Mock fixtures (backend is the source of truth; client never scores) ----
+var LV={LOW:["L0","Low"],MEDIUM:["L1","Medium"],HIGH:["L2","High"],CRITICAL:["L3","Critical"]};
+var SEGS=[];
+var S={user:null,role:null,tab:"insp",sel:null,shown:3,work:[],wl:"loading",wcur:null,wlerr:"",segerr:"",lerr:"",demo:false,busy:0,seg:"",photo:null,gps:null,rating:null,status:null,res:null,seen:{}};
+var $=function(s){return document.querySelector(s)};
+function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML}
+function badge(l){if(!l)return'';var v=LV[l]||['L1',l];return '<span class="badge '+v[0]+'">'+v[1]+'</span>'}
+function segOf(id){return S.work.concat(SEGS).filter(function(s){return s.id===id})[0]||{id:id,name:id,pts:[[77.07,28.63]],level:''}}
+// ---- Config (edit here) ----
+var CFG={region:"ap-south-1",clientId:"5ppg0e92dkbp6bbblsos3g312f",api:"https://4e7bzdbb6g.execute-api.ap-south-1.amazonaws.com",ward:"",demo:true};
+var T=null;
+function ApiErr(s,c,m){this.status=s;this.code=c;this.message=m}ApiErr.prototype=Object.create(Error.prototype);
+function fmtScore(n){return n==null?"–":n<=1?Math.round(n*100):Math.round(n)}
+function dt(x){return x?new Date(x).toLocaleString():""}
+// ---- Cognito (direct JSON API, no SDK) ----
+function cogMsg(j){var t=(j.__type||"").split("#").pop();return({NotAuthorizedException:"Email or password is incorrect.",UserNotFoundException:"Email or password is incorrect.",PasswordResetRequiredException:"Password reset required. Ask an admin.",UserNotConfirmedException:"Account not confirmed. Ask an admin.",InvalidPasswordException:j.message||"Password does not meet the policy.",TooManyRequestsException:"Too many attempts. Wait a minute."})[t]||j.message||"Sign-in failed."}
+function cog(target,body){return fetch("https://cognito-idp."+CFG.region+".amazonaws.com/",{method:"POST",headers:{"Content-Type":"application/x-amz-json-1.1","X-Amz-Target":"AWSCognitoIdentityProviderService."+target},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(cogMsg(j));return j})},function(){throw new Error("Network error. Check your connection.")})}
+function save(r){T={id:r.IdToken,ref:r.RefreshToken||(T&&T.ref),exp:Date.now()+(r.ExpiresIn-60)*1000};try{sessionStorage.setItem("dt",JSON.stringify(T))}catch(e){}}
+function claims(t){try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))}catch(e){return{}}}
+function applyUser(){var c=claims(T.id),g=c["cognito:groups"]||[];S.user=c.email||c["cognito:username"]||"user";
+ if(g.indexOf("supervisors")>-1)S.role="supervisor";else if(g.indexOf("inspectors")>-1)S.role="inspector";
+ else{signOut("Your account is not in the inspectors or supervisors group. Ask Parth to add it.");return false}
+ S.tab=S.role==="supervisor"?"sup":"insp";return true}
+function tok(){if(T&&T.exp>Date.now())return Promise.resolve(T.id);
+ if(!T||!T.ref){signOut("Session expired. Sign in again.");return Promise.reject(new Error("401"))}
+ return cog("InitiateAuth",{AuthFlow:"REFRESH_TOKEN_AUTH",ClientId:CFG.clientId,AuthParameters:{REFRESH_TOKEN:T.ref}}).then(function(r){save(r.AuthenticationResult);return T.id},function(){signOut("Session expired. Sign in again.");throw new Error("401")})}
+function signOut(m){T=null;try{sessionStorage.removeItem("dt")}catch(e){}
+ S.user=null;S.role=null;S.status=null;S.photo=null;S.rating=null;S.gps=null;S.step=0;S.seg="";S.q="";S.work=[];S.wl="loading";S.busy=0;SEGS.length=0;S.lerr=m||"";render()}
+// ---- API layer: ID token, both error shapes, 401 -> sign out ----
+function api(path,o){o=o||{};return tok().then(function(t){return fetch(CFG.api+path,{method:o.method||"GET",headers:Object.assign({Authorization:"Bearer "+t},o.body?{"Content-Type":"application/json"}:{}),body:o.body?JSON.stringify(o.body):undefined})},function(e){throw e}).then(function(r){return r.text().then(function(x){var j={};try{j=x?JSON.parse(x):{}}catch(e){}
+  if(r.status===401){signOut("Session expired. Sign in again.");throw new Error("401")}
+  if(!r.ok){var e=j.error||{};throw new ApiErr(r.status,e.code||"HTTP_"+r.status,e.message||j.message||"Request failed ("+r.status+").")}
+  return j})},function(e){if(e instanceof TypeError)throw new ApiErr(0,"NETWORK","Network error. Check your connection, and that this site's origin is allowed by the API's CORS.");throw e})}
+function nseg(x){var c=(x.geometry&&x.geometry.coordinates)||[];return{id:x.segmentId,name:x.roadName||x.segmentId,level:(x.priorityLevel||"").toUpperCase(),score:x.priorityScore,dust:x.dustRating,days:x.lastCleanedAt?Math.max(0,Math.floor((Date.now()-Date.parse(x.lastCleanedAt))/864e5)):null,expl:x.explanation||x.priorityExplanation||"",pts:c}}
+function pages(path){var out=[];function go(c){return api(path+(c?(path.indexOf("?")>-1?"&":"?")+"cursor="+encodeURIComponent(c):"")).then(function(j){if(j.isDemo)S.demo=true;out=out.concat(j.items||[]);return j.nextCursor?go(j.nextCursor):out})}return go()}
+function rr(){if(!S.user||$("#dlg").open)return;var d=$("#demo");if(d)d.classList.toggle("hide",!S.demo);if(S.tab==="sup"&&S.role==="supervisor")supervisor();else if(S.step===0&&!S.status&&!S.q&&$("#v"))inspector()}
+function loadSegs(){S.segerr="";return pages("/v1/segments"+(CFG.ward?"?ward="+CFG.ward:"")).then(function(a){SEGS.length=0;a.forEach(function(x){SEGS.push(nseg(x))})}).catch(function(e){if(e.message!=="401")S.segerr="Could not load roads: "+e.message}).then(rr)}
+function loadWork(more){var q=[];if(CFG.ward)q.push("ward="+CFG.ward);if(more&&S.wcur)q.push("cursor="+encodeURIComponent(S.wcur));
+ return api("/v1/worklist"+(q.length?"?"+q.join("&"):"")).then(function(j){var it=(j.items||[]).map(nseg);S.work=more?S.work.concat(it):it;S.wcur=j.nextCursor||null;S.wl="ok"}).catch(function(e){if(e.message!=="401"){S.wl="err";S.wlerr=e.message}}).then(rr)}
+function boot(){S.wl="loading";SEGS.length=0;loadSegs();if(S.role==="supervisor")loadWork()}
+setInterval(function(){if(S.user&&S.role==="supervisor"&&S.tab==="sup"&&!document.hidden&&$("#dlg")&&!$("#dlg").open)loadWork()},60000);
+window.addEventListener("focus",function(){if(S.user&&S.role==="supervisor"&&S.tab==="sup")loadWork()});
+// ---- Views ----
+function render(){
+ $("#out").classList.toggle("hide",!S.user);$("#who").textContent=S.user?S.user+" ("+S.role+")":"";
+ if(!S.user)return login();
+ var h="";
+ if(S.role==="supervisor")h+='<div class="tabs" role="tablist"><button role="tab" data-t="sup" aria-selected="'+(S.tab==="sup")+'">Supervisor</button><button role="tab" data-t="insp" aria-selected="'+(S.tab==="insp")+'">Inspector</button></div>';
+ $("#app").innerHTML=h+'<div id="v"></div>';
+ document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){S.tab=b.dataset.t;render()}});
+ if(S.role==="inspector"||S.tab==="insp")inspector();else supervisor();
+}
+function login(){
+ $("#app").innerHTML='<div class="hero"><svg class="sticker" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="cp" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs><g class="spin"><text font-size="11" font-weight="700" fill="currentColor" textLength="268" lengthAdjust="spacing"><textPath href="#cp">DUST-FREE* ✦ *TERMS APPLY ✦ </textPath></text></g><text x="60" y="72" text-anchor="middle" font-size="34" font-weight="700" fill="currentColor">✦</text></svg><h2>Dhool?<br>Not on our watch.</h2><p>Inspect, prioritise and sweep. Chalo, kaam pe lagte hain.</p></div><div class="tick" aria-hidden="true"><div>Dhool ko bye bye ✦ Ring Road, Sector 5 ✦ Jhaadu lagao ✦ Market Road ✦ Saaf sadak, saaf hawa ✦ Canal Link Road ✦ Chalo kaam pe lagte hain ✦ Park Avenue ✦ Dhool ko bye bye ✦ Ring Road, Sector 5 ✦ Jhaadu lagao ✦ Market Road ✦ Saaf sadak, saaf hawa ✦ Canal Link Road ✦ Chalo kaam pe lagte hain ✦ Park Avenue ✦ </div></div><div class="card" style="max-width:440px"><div class="msg">Sign in with your DustTrack email. First time? You will set a new password.</div><div id="lf"><label for="em">Email</label><input id="em" type="email" autocomplete="username"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><div id="le">'+(S.lerr?'<div class="msg err">'+esc(S.lerr)+'</div>':'')+'</div><p><button class="btn p" id="go" style="width:100%">Continue</button></p></div></div>';
+ var sess=null,em="";
+ function err(m){$("#le").innerHTML='<div class="msg err">'+esc(m)+'</div>'}
+ function busy(b){var g=$("#go")||$("#go2");if(g)g.disabled=b}
+ function done(r){save(r);if(!applyUser())return;boot();render()}
+ $("#go").onclick=function(){em=$("#em").value.trim().toLowerCase();var pw=$("#pw").value;
+  if(!em||!pw){err("Enter your email and password.");return}busy(true);
+  cog("InitiateAuth",{AuthFlow:"USER_PASSWORD_AUTH",ClientId:CFG.clientId,AuthParameters:{USERNAME:em,PASSWORD:pw}}).then(function(r){
+   if(r.AuthenticationResult)return done(r.AuthenticationResult);
+   if(r.ChallengeName==="NEW_PASSWORD_REQUIRED"){sess=r.Session;return newpw()}
+   busy(false);err("This account needs a sign-in step the app does not support ("+r.ChallengeName+"). Ask an admin.")}).catch(function(e){busy(false);err(e.message)})};
+ function newpw(){$("#lf").innerHTML='<div class="msg">Set a new password to continue.</div><label for="np">New password</label><input id="np" type="password" autocomplete="new-password"><div id="le"></div><p><button class="btn p" id="go2">Save and continue</button></p>';
+  $("#go2").onclick=function(){var np=$("#np").value;if(np.length<8){err("Use at least 8 characters.");return}busy(true);
+   cog("RespondToAuthChallenge",{ChallengeName:"NEW_PASSWORD_REQUIRED",ClientId:CFG.clientId,Session:sess,ChallengeResponses:{USERNAME:em,NEW_PASSWORD:np}}).then(function(r){if(r.AuthenticationResult)done(r.AuthenticationResult);else{busy(false);err("Could not finish sign-in. Try again.")}}).catch(function(e){busy(false);err(e.message)})}}
+ $("#pw").onkeydown=function(e){if(e.key==="Enter")$("#go").click()};
+}
+var G=["○","◔","◑","●"],HINT=["No visible dust on the surface","A thin film. Dust only when disturbed","Clear deposits. Plumes behind vehicles","Thick layers. Markings hard to see"];
+var TT=["Which stretch?","Snap the road.","Where are you?","How dusty is it?","Check and send."];
+var NEED=["Pick a stretch to continue","Add a photo to continue","Share your location to continue","Choose a rating to continue",""];
+S.step=0;S.anim=true;
+function resetInsp(){S.status=null;S.photo=null;S.rating=null;S.gps=null;S.step=0;S.seg='';S.q='';S.anim=true;render()}
+function nav(n){S.step=n;S.anim=true;inspector()}
+function okStep(){return [!!S.seg,!!S.photo,!!S.gps,S.rating!==null,true][S.step]}
+function segOf(id){return SEGS.filter(function(s){return s.id===id})[0]}
+function picks(){
+ var q=(S.q||"").toLowerCase(),l=SEGS.filter(function(s){return !q||(s.name+s.id).toLowerCase().indexOf(q)>-1});
+ if(!SEGS.length)return '<div class="msg'+(S.segerr?' err':'')+'">'+esc(S.segerr||"Loading roads...")+'</div><label for="sid">Or type a segment ID</label><input id="sid" placeholder="e.g. SEG-001" value="'+esc(S.seg||"")+'">';
+ return l.length?l.map(function(s){return '<button class="pick'+(s.id===S.seg?' sel':'')+'" data-s="'+s.id+'" aria-pressed="'+(s.id===S.seg)+'"><span><b>'+esc(s.name)+'</b><span class="mut">'+s.id+'</span></span>'+badge(s.level)+'</button>'}).join(""):'<div class="msg">No match. Try another name or ID.</div>';
+}
+function inspector(){
+ var v,st=["PENDING","PROCESSING","COMPLETED"];
+ if(S.status){
+  var T={PENDING:"On it.",PROCESSING:"On it.",COMPLETED:"Done.",REJECTED:"Not accepted.",FAILED:"Oops.",TIMEOUT:"Still on it."}[S.status];
+  $("#v").innerHTML='<div class="step-in"><h2>'+T+'</h2><div class="steps">'+st.map(function(x){return '<span class="'+(S.status===x||(x==="COMPLETED"&&["REJECTED","FAILED","TIMEOUT"].indexOf(S.status)>-1)?'on':'')+'">'+x+'</span>'}).join("")+'</div>'+result()+'</div>';return}
+ var b="",s=S.step;
+ if(s===0)b='<input id="sq" placeholder="Search road name or ID" autocomplete="off" aria-label="Search stretches" value="'+esc(S.q||"")+'"><div id="pl" style="margin-top:12px">'+picks()+'</div>';
+ if(s===1)b=(S.photo?'<div class="shot"><img src="'+S.photo.thumb+'" alt="Your photo"></div><div class="mut" style="margin-top:8px">'+esc(S.photo.name)+' · '+(S.photo.size/1048576).toFixed(1)+' MiB</div><label class="btn" style="display:inline-flex;align-items:center;margin-top:14px;cursor:pointer;position:relative">Retake<input id="ph" type="file" accept="image/*" capture="environment" class="vh"></label>':'<label class="cam"><input id="ph" type="file" accept="image/*" capture="environment" class="vh"><span class="g">◉</span><b>Open camera</b><span class="mut">or choose a photo. JPEG, PNG or WebP.</span></label>')+'<div>'+(S.perr||"")+'</div>';
+ if(s===2)b=(S.gps?'<div class="fix"><span class="g">◎</span><div><b>Location locked'+(S.gps.demo?' (demo)':'')+'</b><div class="mut">'+S.gps.lat.toFixed(5)+', '+S.gps.lon.toFixed(5)+(S.gps.acc?' · within '+Math.round(S.gps.acc)+' m':'')+'</div></div></div><button class="btn" id="gp">Update location</button>':'<p class="lead">We use your position to confirm you are on the road.</p><button class="btn p" id="gp">Share my location</button>'+(CFG.demo?' <button class="btn" id="gd">Use road start (testing)</button>':''))+'<div id="gm">'+(S.gerr||"")+'</div>';
+ if(s===3)b='<div class="rlist">'+["Clean","Light","Moderate","Heavy"].map(function(n,i){return '<button class="rb'+(S.rating===i?' sel':'')+'" data-r="'+i+'" aria-pressed="'+(S.rating===i)+'"><span class="g">'+G[i]+'</span><span><b>'+n+'</b><span class="mut">'+HINT[i]+'</span></span></button>'}).join("")+'</div>';
+ if(s===4){var sg=segOf(S.seg);function rv(l,x,e){return '<div class="rv"><span class="mut">'+l+'</span><span>'+x+'</span><button class="lnk" data-e="'+e+'">Edit</button></div>'}
+  b=rv("Stretch",'<b>'+esc(sg.name)+'</b><div class="mut">'+sg.id+'</div>',0)+rv("Photo",'<img src="'+S.photo.thumb+'" alt="Your photo">',1)+rv("Location",S.gps.lat.toFixed(4)+', '+S.gps.lon.toFixed(4),2)+rv("Rating",G[S.rating]+' <b>'+["Clean","Light","Moderate","Heavy"][S.rating]+'</b>',3)+'<div style="border-top:2px solid var(--fg)"></div>'}
+ var bar='<div class="bar2"><div class="in">'+(s>0?'<button class="btn" id="bk">Back</button>':'<span></span>')+'<span class="hint">'+(okStep()?'':NEED[s])+'</span>'+(s<4?'<button class="btn p" id="nx"'+(okStep()?'':' disabled')+'>Continue</button>':'<button class="btn p go" id="sb">Submit</button>')+'</div></div>';
+ var cls=S.anim?' step-in':'';S.anim=false;
+ $("#v").innerHTML='<div class="prog" role="img" aria-label="Step '+Math.min(s+1,4)+' of 4">'+[0,1,2,3].map(function(i){return '<i class="'+(i<=s?'on':'')+'"></i>'}).join("")+'</div><div class="mut" style="margin:10px 0 18px">'+(s<4?'Step '+(s+1)+' of 4':'Last look')+'</div><div class="'+cls+'"><h2>'+TT[s]+'</h2>'+b+'</div><div style="height:96px"></div>'+bar;
+ function bindPicks(){document.querySelectorAll("[data-s]").forEach(function(e){e.onclick=function(){S.seg=e.dataset.s;var y=scrollY;inspector();scrollTo(0,y)}})}
+ bindPicks();
+ if($("#sid"))$("#sid").oninput=function(e){S.seg=e.target.value.trim();$("#nx").disabled=!S.seg};
+ if($("#sq"))$("#sq").oninput=function(e){S.q=e.target.value;$("#pl").innerHTML=picks();bindPicks()};
+ document.querySelectorAll("[data-r]").forEach(function(e){e.onclick=function(){S.rating=+e.dataset.r;inspector()}});
+ document.querySelectorAll("[data-e]").forEach(function(e){e.onclick=function(){nav(+e.dataset.e)}});
+ if($("#ph"))$("#ph").onchange=function(e){photo(e.target.files[0])};
+ if($("#gp"))$("#gp").onclick=gps;
+ if($("#gd"))$("#gd").onclick=function(){var p=S.seg?segOf(S.seg).pts[0]:[77.07,28.63];S.gps={lat:p[1],lon:p[0],acc:8,demo:true};S.gerr="";inspector()};
+ if($("#bk"))$("#bk").onclick=function(){nav(s-1)};
+ if($("#nx"))$("#nx").onclick=function(){if(okStep())nav(s+1)};
+ if($("#sb"))$("#sb").onclick=submit;
+}
+function photo(f){
+ if(!f)return;S.perr="";var okT=["image/jpeg","image/png","image/webp"];
+ if(/hei[cf]/i.test(f.type+f.name)||okT.indexOf(f.type)<0){S.perr='<div class="msg err">Use a JPEG, PNG or WebP photo. HEIC is not supported.</div>';inspector();return}
+ var r=new FileReader();r.onload=function(){var img=new Image();img.onload=function(){
+  function cv(m){var k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=img.width*k;c.height=img.height*k;c.getContext("2d").drawImage(img,0,0,c.width,c.height);return c}
+  var th=cv(640).toDataURL("image/jpeg",.8),size=f.size,rb=null;
+  function fin(){S.photo={name:f.name,size:size,thumb:th,blob:rb||f,type:rb?"image/jpeg":f.type};inspector()}
+  if(f.size>10*1048576)cv(2000).toBlob(function(b){size=b.size;rb=b;fin()},"image/jpeg",.85);else fin()};
+  img.onerror=function(){S.perr='<div class="msg err">That file could not be read. Try another photo.</div>';inspector()};img.src=r.result};r.readAsDataURL(f);
+}
+function gps(){
+ if(!navigator.geolocation){S.gerr='<div class="msg err">This browser has no location support. Use the demo location instead.</div>';inspector();return}
+ $("#gm").innerHTML='<div class="msg">Locating you...</div>';
+ navigator.geolocation.getCurrentPosition(function(p){S.gps={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};S.gerr="";inspector()},function(e){S.gerr='<div class="msg err">'+(e.code===1?'Location is blocked. Allow location for this site in browser settings (HTTPS required), then try again.':'Could not get a location fix. Move to open sky and retry.')+'</div>';inspector()},{enableHighAccuracy:true,timeout:15000});
+}
+function submit(){
+ if(S.busy)return;S.busy=1;S.status="PENDING";S.res=null;inspector();var ph=S.photo;
+ api("/v1/inspections",{method:"POST",body:{segmentId:S.seg,latitude:S.gps.lat,longitude:S.gps.lon,dustRating:S.rating,fileType:ph.type}}).then(function(j){
+  S.iid=j.inspectionId;
+  // PUT straight to S3: exact signed content type, NO Authorization header
+  return fetch(j.upload.url,{method:j.upload.method||"PUT",headers:{"Content-Type":j.upload.contentType||ph.type},body:ph.blob}).then(function(r){if(!r.ok)throw new ApiErr(r.status,"UPLOAD",r.status===403?"The upload link expired. Start a new inspection.":"Photo upload failed ("+r.status+").")},function(){throw new ApiErr(0,"UPLOAD","Photo upload failed. Check your connection; the bucket CORS must allow this origin.")})
+ }).then(function(){S.status="PROCESSING";inspector();poll(0,Date.now())}).catch(fail);
+}
+function fail(e){S.busy=0;if(e.message==="401")return;S.status="FAILED";S.res={msg:e.message};inspector()}
+function poll(n,t0){setTimeout(function(){
+ if(!S.user)return;if(Date.now()-t0>60000){S.busy=0;S.status="TIMEOUT";inspector();return}
+ api("/v1/inspections/"+encodeURIComponent(S.iid)).then(function(j){var s=j.status;
+  if(s==="PENDING"||s==="PROCESSING"){S.status=s;inspector();return poll(n+1,t0)}
+  S.busy=0;
+  if(s==="COMPLETED"){var sc=j.priorityScore!=null?j.priorityScore:j.score;S.res={score:sc==null?null:fmtScore(sc),level:(j.priorityLevel||j.level||"").toUpperCase(),expl:j.explanation||"",ai:j.aiAnalysis||null,dis:!!j.disagreement};S.status="COMPLETED"}
+  else if(s==="REJECTED"){S.status="REJECTED";S.res={msg:j.message||j.rejectionReason||(j.error&&j.error.message)||"The backend rejected this inspection (for example the GPS point is too far from the road, or the photo is a duplicate)."}}
+  else{S.status="FAILED";S.res={msg:"Processing failed. Try again."}}
+  inspector()}).catch(function(e){if(e.status===404||e.status===0||e.status>=500)return poll(n+1,t0);fail(e)})},Math.min(2000+n*400,5000))}
+function result(){
+ var s=S.status,r=S.res;
+ if(s==="PENDING"||s==="PROCESSING")return '<div class="msg">'+(s==="PENDING"?"Uploading your photo...":"Crunching the dust numbers...")+'</div>';
+ if(s==="REJECTED")return '<div class="msg err"><b>Rejected.</b> '+esc(r.msg)+'</div>';
+ if(s==="FAILED")return '<div class="msg err">'+esc((r&&r.msg)||"Something went wrong.")+' <button class="btn" onclick="S.busy=0;submit()">Retry</button></div>';
+ if(s==="TIMEOUT")return '<div class="msg">Still processing. Check back in a minute.</div>';
+ return '<div class="big">'+(r.score==null?'✓':r.score)+'</div><p>'+badge(r.level)+'</p><p>'+esc(r.expl)+'</p>'+(r.ai?'<div class="msg">AI check: dust '+r.ai.dustRating+'/3'+(r.ai.debrisDetected?', debris detected':'')+'</div>':'<div class="msg">AI check skipped.</div>')+(r.dis?'<div class="msg err"><b>Model differs.</b> Your rating was kept.</div>':'')+'<button class="btn p" onclick="S.status=null;S.photo=null;S.rating=null;S.gps=null;S.step=0;resetInsp()">New inspection</button>';
+}
+function row(s){return '<div class="card row" tabindex="0" data-id="'+esc(s.id)+'" style="'+(S.sel===s.id?'box-shadow:inset 6px 0 0 var(--acc);padding-left:18px':'')+'"><div><h3>'+esc(s.name)+'</h3>'+(s.expl?'<div class="mut">'+esc(s.expl)+'</div>':'')+'<div class="mut">Dust '+(s.dust==null?'–':s.dust)+'/3 · '+(s.days==null?'never cleaned':s.days+' days since cleaning')+'</div></div><div style="text-align:right">'+badge(s.level)+'<b>'+fmtScore(s.score)+'</b><button class="btn" data-c="'+esc(s.id)+'" style="margin-top:6px">Mark cleaned</button></div></div>'}
+function supervisor(){
+ var w=S.work,l,mp,m=SEGS.filter(function(s){return s.pts.length>1});
+ if(S.wl==="err")l='<div class="msg err">'+esc(S.wlerr)+' <button class="btn" id="rt">Retry</button></div>';
+ else if(S.wl==="loading"&&!w.length)l='<div class="msg">Loading worklist...</div>';
+ else l=(w.length?w.map(row).join(""):'<div class="msg">Sab chakachak! No roads need cleaning right now.</div>')+(S.wcur?'<button class="btn" id="lm" style="width:100%">Load more</button>':'');
+ if(!m.length)mp='<div class="msg">'+esc(S.segerr||"Loading road geometry...")+'</div>';
+ else{var xs=[],ys=[];m.forEach(function(s){s.pts.forEach(function(p){xs.push(p[0]);ys.push(p[1])})});
+  var x0=Math.min.apply(0,xs),y1=Math.max.apply(0,ys),k=Math.min(560/((Math.max.apply(0,xs)-x0)||1),360/((y1-Math.min.apply(0,ys))||1));
+  var P=function(p){return (20+(p[0]-x0)*k).toFixed(1)+","+(20+(y1-p[1])*k).toFixed(1)};
+  mp='<svg class="map" viewBox="0 0 600 400" role="img" aria-label="Road segments by priority">'+m.map(function(s){return '<path class="'+(S.sel===s.id?'sel':'')+'" data-lv="'+(LV[s.level]?LV[s.level][0]:"L1")+'" data-id="'+esc(s.id)+'" d="M'+s.pts.map(P).join("L")+'" tabindex="0" aria-label="'+esc(s.name)+', '+esc(s.level||"unknown")+'"/>'}).join("")+'</svg><p class="mut">Schematic map. Levels: '+Object.keys(LV).map(badge).join(" ")+'</p>'}
+ $("#v").innerHTML='<div class="split"><div><h2>Worklist ('+w.length+')</h2>'+l+'</div><div><h2>Map</h2>'+mp+'</div></div>';
+ document.querySelectorAll("[data-id]").forEach(function(e){e.onclick=function(){S.sel=e.dataset.id;supervisor();detail(S.sel)};e.onkeydown=function(k){if(k.key==="Enter")e.onclick()}});
+ document.querySelectorAll("[data-c]").forEach(function(b){b.onclick=function(ev){ev.stopPropagation();clean(b.dataset.c)}});
+ if($("#lm"))$("#lm").onclick=function(){loadWork(true)};
+ if($("#rt"))$("#rt").onclick=function(){S.wl="loading";supervisor();loadWork()};
+}
+function detail(id){var d=$("#dlg");d.innerHTML='<p>Loading...</p>';d.showModal();
+ api("/v1/segments/"+encodeURIComponent(id)).then(function(j){var s=nseg(j),br=j.priorityBreakdown,bh="";
+  if(br){var ar=Array.isArray(br)?br:Object.keys(br).map(function(k){var v=br[k];return typeof v==="object"?Object.assign({name:k},v):{name:k,points:v}});
+   bh='<h3>Score breakdown</h3>'+ar.map(function(b){var p=b.points!=null?b.points:b.contribution!=null?b.contribution:b.value;return '<div>'+esc(String(b.name||b.component||b.label||""))+(b.weight!=null?' · weight '+b.weight:'')+(p!=null?' · '+p:'')+'</div>'}).join("")}
+  var ins=(j.recentInspections||j.inspections||[]).slice(0,10),ce=(j.cleaningEvents||j.recentCleanings||[]).slice(0,10);
+  d.innerHTML='<h2 style="font-size:36px">'+esc(s.name)+'</h2><p>'+badge(s.level)+' <b>'+fmtScore(s.score)+'</b></p>'+(s.expl?'<p>'+esc(s.expl)+'</p>':'')+(j.cleaningCadenceDays?'<p class="mut">Cleaned every '+j.cleaningCadenceDays+' days'+(j.lastCleanedAt?' · last '+dt(j.lastCleanedAt):'')+'</p>':'')+bh+
+   (ins.length?'<h3>Recent inspections</h3>'+ins.map(function(i){return '<div class="mut">'+dt(i.inspectedAt)+' · rating '+(i.inspectorDustRating==null?'–':i.inspectorDustRating)+' · '+esc(i.status||"")+(i.disagreement?' · <b>Model differed</b>':'')+'</div>'}).join(""):'')+
+   (ce.length?'<h3>Cleaning events</h3>'+ce.map(function(c){return '<div class="mut">'+dt(c.cleanedAt)+' · '+esc(c.method||"")+' · '+esc(c.squadId||"")+'</div>'}).join(""):'')+'<p><button class="btn p" id="cl">Close</button></p>';
+  $("#cl").onclick=function(){d.close()}}).catch(function(e){if(e.message!=="401"){d.innerHTML='<div class="msg err">'+esc(e.message)+'</div><p><button class="btn p" id="cl">Close</button></p>';$("#cl").onclick=function(){d.close()}}});
+}
+function clean(id){
+ var s=segOf(id),d=$("#dlg"),n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());
+ d.innerHTML='<h2 style="margin-top:0">Mark cleaned: '+esc(s.name)+'</h2><label for="cm">Method</label><select id="cm"><option>MANUAL</option><option>MECHANICAL</option></select><label for="cq">Squad ID</label><input id="cq"><label for="ca">Cleaned at</label><input id="ca" type="datetime-local" value="'+n.toISOString().slice(0,16)+'"><label for="cr">Remarks</label><textarea id="cr" rows="2"></textarea><div id="ce"></div><p><button class="btn p" id="cs">Save</button> <button class="btn" id="cx">Cancel</button></p>';
+ d.showModal();$("#cx").onclick=function(){d.close()};
+ $("#cs").onclick=function(){var q=$("#cq").value.trim(),cd=new Date($("#ca").value),b=$("#cs");
+  if(!q){$("#ce").innerHTML='<div class="msg err">Enter a squad ID.</div>';return}
+  if(isNaN(cd)){$("#ce").innerHTML='<div class="msg err">Pick a valid cleaned-at time.</div>';return}
+  b.disabled=true;
+  api("/v1/segments/"+encodeURIComponent(id)+"/cleaned",{method:"POST",body:{cleanedAt:cd.toISOString().replace(/\.\d+Z$/,"Z"),squadId:q,method:$("#cm").value,remarks:$("#cr").value.trim()}}).then(function(){d.close();var w=document.createElement("div");w.className="wipe";w.textContent="Saaf! ✦";document.body.appendChild(w);setTimeout(function(){w.remove()},1400);loadWork();loadSegs()}).catch(function(e){b.disabled=false;if(e.message!=="401")$("#ce").innerHTML='<div class="msg err">'+esc(e.status===403?"Only supervisors can record cleaning.":e.message)+'</div>'})};
+}
+$("#out").onclick=function(){signOut()};
+try{T=JSON.parse(sessionStorage.getItem("dt"))}catch(e){T=null}
+if(T&&T.id&&applyUser())boot();
+render();
+</script>
+</body>
+</html>
