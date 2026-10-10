@@ -1,0 +1,18 @@
+[project]
+name = "dusttrack-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "RUF", "TRY", "S", "BLE", "W"]
+# S101: asserts are idiomatic in pytest. TRY003/TRY300: codebase raises
+# short messages inline and returns inside try by design.
+ignore = ["S101", "TRY003", "TRY300"]

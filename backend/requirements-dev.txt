@@ -1,0 +1,4 @@
+boto3==1.43.111
+moto[dynamodb,s3]==5.2.3
+pytest==9.1.1
+ruff==0.17.0

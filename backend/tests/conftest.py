@@ -1,9 +1,8 @@
-"""Pytest bootstrap: moto-friendly env, src on path, clock reset."""
+"""Pytest bootstrap: moto-friendly env, clock reset, AWS fixtures."""
 
 from __future__ import annotations
 
 import os
-import sys
 
 # Local-only SDK setup (Lambda provides real region/credentials itself;
 # AWS_REGION/AWS_DEFAULT_REGION are reserved there and settable here only).
@@ -15,13 +14,8 @@ os.environ.setdefault("SEGMENTS_TABLE", "test-segments")
 os.environ.setdefault("CLEANING_EVENTS_TABLE", "test-cleaning-events")
 os.environ.setdefault("PHOTO_BUCKET", "test-photos")
 
-import pytest
-
-SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
 import boto3
+import pytest
 from moto import mock_aws
 
 from common import clock

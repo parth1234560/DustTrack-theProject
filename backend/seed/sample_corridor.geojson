@@ -1,0 +1,26 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "note": "PLACEHOLDER geometry near Karol Bagh, Delhi (~2 km) for the DustTrack demo. Replace with a real OSM export before any pilot."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Karol Bagh Sample Corridor",
+        "placeholder": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [77.182, 28.644],
+          [77.1855, 28.6475],
+          [77.188, 28.651],
+          [77.1915, 28.6545],
+          [77.194, 28.6585],
+          [77.1965, 28.662]
+        ]
+      }
+    }
+  ]
+}

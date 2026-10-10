@@ -9,13 +9,15 @@ from __future__ import annotations
 from typing import Any
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 _MISSING_CODES = {"404", "NoSuchKey", "NotFound", "NoSuchBucket"}
+_S3_CONFIG = Config(signature_version="s3v4")  # SigV4 presigned URLs for ap-south-1
 
 
 def _client():
-    return boto3.client("s3")
+    return boto3.client("s3", config=_S3_CONFIG)
 
 
 def head_object(bucket: str, key: str) -> dict[str, Any] | None:
